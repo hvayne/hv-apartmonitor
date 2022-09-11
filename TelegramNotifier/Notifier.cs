@@ -1,6 +1,7 @@
 ﻿using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace TelegramNotifier
 {
@@ -40,6 +41,51 @@ namespace TelegramNotifier
             catch (Exception e)
             {
                 Logger.Error($"{e.Data}\n{e.Message}\n{e.StackTrace}");
+                return -1;
+            }
+        }
+        public int NotifyWithImages(List<string> urls, string messageBody)
+        {
+            if (urls == null || urls.Count == 0)
+            {
+                Logger.Error("url list was null or empty");
+                return -1;
+            }
+            try
+            {
+                List<InputMediaPhoto> album = new();
+                foreach (string url in urls)
+                {
+                    InputMediaPhoto photo = new(new InputMedia(url));
+                    album.Add(photo);
+                }
+                if (messageBody.Length > 1023)
+                {
+                    messageBody = messageBody[..1020];
+                    messageBody += "<<<";
+                    Logger.Info("message body was trimmed!");
+                }
+                album.First().Caption = messageBody;
+                album.First().ParseMode = ParseMode.Html;
+                Message[]? msg = BotClient.SendMediaGroupAsync(ChatId, album).Result;
+                if (msg == null)
+                {
+                    Logger.Error("Telegram responded with 0 messages");
+                }
+                else
+                {
+                    string msgs = string.Empty;
+                    foreach (var message in msg)
+                    {
+                        msgs += message.MessageId + ",";
+                    }
+                    Logger.Info("messages " + msgs + " were sent to chat");
+                }
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex.Message);
                 return -1;
             }
         }

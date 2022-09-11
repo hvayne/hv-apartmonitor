@@ -11,7 +11,7 @@ namespace ApartmentCrawler
 
             Crawler crawler = new();
             crawler.Start();
-           //  crawler.Dev();
+            //  crawler.Dev();
 
         }
         static void ConfigNlog()

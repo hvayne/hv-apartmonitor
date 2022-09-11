@@ -3,6 +3,8 @@ using System.Threading;
 using TelegramNotifier;
 using System.Collections.Generic;
 using ApartmentCrawler.DbProvider;
+using Unidecode.NET;
+using Newtonsoft.Json;
 
 namespace ApartmentCrawler
 {
@@ -54,9 +56,9 @@ namespace ApartmentCrawler
                                 // filtration
                                 if (product.OwnerTypeId != "1")
                                     continue;
-                                string currency = product.CurrencyId == "1" ? "USD" : "GEL";
-                                TgNotifyer.Notify($"{product.Rooms} room apartment for {product.Price}{currency}. Area size is {product.AreaSize}m2. <a href=\"https://www.myhome.ge/en/pr/{product.ProductId}\">#{product.ProductId}</a>");
-                                Thread.Sleep(5000);
+                                // POST IT!
+                                PostProductToChannel(product);
+                                Thread.Sleep(10000);
                                 Logger.Info("New product to post it to channel!");
                                 Logger.Info($"price = {product.Price}, currencyId= {product.CurrencyId}" +
                                     $" square = {product.AreaSizeValue}; id={product.ProductId}; vip={product.Vip}");
@@ -84,29 +86,48 @@ namespace ApartmentCrawler
                 Thread.Sleep(TimeSpan.FromMinutes(7));
             }
         }
-
-        public void Dev()
+        private void PostProductToChannel(Entities.Product product)
         {
-            AptCrawlerContext db = new();
-            Entities.User found = db.Users.Find("1");
-            if (found == null)
+            string currency = product.CurrencyId == "1" ? "USD" : "GEL";
+            Logger.Debug(JsonConvert.SerializeObject(product, Formatting.Indented));
+            double priceUsd = Convert.ToDouble(product.Price, System.Globalization.CultureInfo.InvariantCulture);
+            if (product.CurrencyId != "1")
             {
-                Logger.Info($"New user#1 found! Adding to database...");
-                db.Users.Add(new Entities.User { UserId = "1", Username = "durov" });
+                double priceGel = Convert.ToDouble(product.Price, System.Globalization.CultureInfo.InvariantCulture);
+                double USDGEL = 2.85;
+                priceUsd = (int)(priceGel / USDGEL);
             }
-            Entities.User found2 = db.Users.Find("1");
-            if (found == null)
+            double areaSize = Convert.ToDouble(product.AreaSize, System.Globalization.CultureInfo.InvariantCulture);
+            double pricePer50m = 999999;
+            if (areaSize > 0)
             {
-                Logger.Info($"New user#{found2.UserId} found! Adding to database...");
-                db.Users.Add(new Entities.User { UserId = "1", Username = "durov" });
+                pricePer50m = (priceUsd / areaSize) * 50;
             }
             else
             {
-                Logger.Info("User already in database");
+                Logger.Debug($"Area size of apartment was 0 m2!");
             }
+            string general = $"{Convert.ToDouble(product.Rooms, System.Globalization.CultureInfo.InvariantCulture):0} комнаты за {priceUsd:0}$.\n";
+            string sizeInfo = $"Площадь {product.AreaSize:0} m2. Цена за 50 метров — {pricePer50m:0}$\n";
+            string productLink = $"<a href=\"https://www.myhome.ge/en/pr/{product.ProductId}\">Объявление#{product.ProductId}</a> \n";
+            string userLink = $"<a href=\"https://www.myhome.ge/en/search/?UserID={product.UserId}\">Пользователь#{product.UserId}</a> \n";
+            string elseInfo = $"| ParentId = {product.ParentId}. MaklerId = {product.MaklerId}. MaklerName = {product.MaklerName} | " +
+                $"Адрес: <code>{product.StreetAddress.Unidecode().Replace("’", "")}</code> \n";
+            string caption = $"{general}{sizeInfo}{productLink}{userLink}{elseInfo}";
 
-            // db.SaveChanges();
-            Console.WriteLine();
+            List<string> urls = new();
+            for (int i = 1; i < Convert.ToInt32(product.PhotosCount); i++)
+            {
+                if (i > 3)
+                    break;
+                urls.Add($"https://static.my.ge/myhome/photos/{product.Photo}/large/{product.ProductId}_{i}.jpg");
+            }
+            int result = TgNotifyer.NotifyWithImages(urls, caption);
+        }
+
+        public void Dev()
+        {
+            Console.WriteLine("ფარნავაზ მეფის парнаваз мепе 108, Rustaveli District, Batumi, Adjara".Unidecode());
         }
     }
 }
