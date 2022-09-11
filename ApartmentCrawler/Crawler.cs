@@ -17,15 +17,15 @@ namespace ApartmentCrawler
             // main loop
             while (true)
             {
-                for (int i = 20; i < 65; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     using AptCrawlerContext db = new();
                     Logger.Trace($"Fetching page#{i}...");
                     var productsResp = client.GetProductsPage(i);
                     if (null == productsResp)
                     {
-                        Logger.Debug("productsResp was null. Sleep for a few seconds");
-                        Thread.Sleep(1000);
+                        Logger.Debug("productsResp was null. Sleep for a 5 seconds");
+                        Thread.Sleep(5000);
                         continue;
                     }
                     // foreach by pr_id
@@ -36,7 +36,6 @@ namespace ApartmentCrawler
                         {
                             Logger.Trace($"New user#{user.Value.UserId} found! Adding to database...");
                             db.Users.Add(user.Value);
-                            db.SaveChanges();
                         }
                         else
                         {
@@ -50,17 +49,22 @@ namespace ApartmentCrawler
                         {
                             Logger.Trace($"New product#{product.ProductId} found! Adding to database...");
                             db.Products.Add(product);
-                            db.SaveChanges();
                             if (!firstIteration)
                             {
-                                TgNotifyer.Notify($"New ad found! <a href=\"https://www.myhome.ge/en/pr/{product.ProductId}\">#{product.ProductId}</a>");
-
+                                // filtration
+                                if (product.OwnerTypeId != "1")
+                                    continue;
+                                string currency = product.CurrencyId == "1" ? "USD" : "GEL";
+                                TgNotifyer.Notify($"{product.Rooms} room apartment for {product.Price}{currency}. Area size is {product.AreaSize}m2. <a href=\"https://www.myhome.ge/en/pr/{product.ProductId}\">#{product.ProductId}</a>");
+                                Thread.Sleep(5000);
                                 Logger.Info("New product to post it to channel!");
                                 Logger.Info($"price = {product.Price}, currencyId= {product.CurrencyId}" +
                                     $" square = {product.AreaSizeValue}; id={product.ProductId}; vip={product.Vip}");
                             }
                             else
                             {
+                                Logger.Info($"price = {product.Price}, currencyId= {product.CurrencyId}" +
+                                    $" square = {product.AreaSizeValue}; id={product.ProductId}; vip={product.Vip}");
                                 Logger.Trace("Can be posted to channel, but it's first iteration since we launch the program");
                             }
                         }
@@ -69,6 +73,7 @@ namespace ApartmentCrawler
                             Logger.Info("Same product again...");
                         }
                     }
+                    db.SaveChanges();
                     // add to db
                     // send notification
                     Logger.Info("Sleep 1337ms");
@@ -76,9 +81,10 @@ namespace ApartmentCrawler
                 }
                 firstIteration = false;
                 Logger.Info("Crawling ended, let's sleep for a short time");
-                Thread.Sleep(TimeSpan.FromMinutes(10));
+                Thread.Sleep(TimeSpan.FromMinutes(7));
             }
         }
+
         public void Dev()
         {
             AptCrawlerContext db = new();
