@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using ApartmentCrawler.DbProvider;
 using Unidecode.NET;
 using Newtonsoft.Json;
+using ApartmentCrawler.Commands;
 
 namespace ApartmentCrawler
 {
@@ -14,6 +15,7 @@ namespace ApartmentCrawler
         private Notifier TgNotifyer = Notifier.Instance;
         public void Start()
         {
+            RegisterNotifierCommands();
             bool firstIteration = false;
             Client client = new();
             // main loop
@@ -128,6 +130,11 @@ namespace ApartmentCrawler
         public void Dev()
         {
             Console.WriteLine("ფარნავაზ მეფის парнаваз мепе 108, Rustaveli District, Batumi, Adjara".Unidecode());
+        }
+
+        private void RegisterNotifierCommands()
+        {
+            Handlers.RegisterCommand("/ban", x => new BanCommand(x));
         }
     }
 }

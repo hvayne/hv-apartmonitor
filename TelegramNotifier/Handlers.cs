@@ -39,20 +39,11 @@ namespace TelegramNotifier
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             var handler = update.Type switch
-            {
-                // UpdateType.Unknown:
-                // UpdateType.ChannelPost:
-                // UpdateType.EditedChannelPost:
-                // UpdateType.ShippingQuery:
-                // UpdateType.PreCheckoutQuery:
-                // UpdateType.Poll:
+            {               
                 UpdateType.ChannelPost => BotOnMessageReceived(botClient, update.ChannelPost),
-                //UpdateType.Message => BotOnMessageReceived(botClient, update.Message),
-                //UpdateType.EditedMessage => BotOnMessageReceived(botClient, update.EditedMessage),
-                //UpdateType.CallbackQuery => BotOnCallbackQueryReceived(botClient, update.CallbackQuery),
-                //UpdateType.InlineQuery => BotOnInlineQueryReceived(botClient, update.InlineQuery),
-                //UpdateType.ChosenInlineResult => BotOnChosenInlineResultReceived(botClient, update.ChosenInlineResult),
-                _ => UnknownUpdateHandlerAsync(botClient, update)
+                UpdateType.Message => BotOnMessageReceived(botClient, update.Message),
+                UpdateType.EditedMessage => BotOnMessageReceived(botClient, update.EditedMessage),
+               _ => UnknownUpdateHandlerAsync(botClient, update)
             };
 
             try
