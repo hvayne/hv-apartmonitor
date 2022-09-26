@@ -10,7 +10,8 @@ namespace TelegramNotifier
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
         private static TelegramBotClient BotClient = new("256930387:AAEopn2bJqrmLL9EWHxn8Jtuiw0vvIvy1Cg"); // nanobyte_bot
-        private static long ChatId = -1001452888696; // Apartments Crawler
+        private static long RentChatId = -1001452888696; // Apartments Crawler [RENT]
+        private static long SaleChatId = -1001641272354; // Apartments Crawler [SALE]
 
         private static int UniqueId = 0;
 
@@ -29,11 +30,16 @@ namespace TelegramNotifier
         /// <param name="messageBody">Message body</param>
         /// <param name="disableNotification"></param>
         /// <returns>Message id</returns>
-        public int Notify(string messageBody, bool disableNotification = true)
+        public int Notify(string messageBody, bool disableNotification = true, bool isRent = true)
         {
             try
             {
-                var message = BotClient.SendTextMessageAsync(ChatId, $"{messageBody}\n________________" +
+                long chatId = RentChatId;
+                if(!isRent)
+                {
+                    chatId = SaleChatId;
+                }
+                var message = BotClient.SendTextMessageAsync(chatId, $"{messageBody}\n________________" +
                     $"\nInstance #{UniqueId}", parseMode: ParseMode.Html, disableNotification: disableNotification).Result;
 
                 return message.MessageId;
@@ -44,7 +50,7 @@ namespace TelegramNotifier
                 return -1;
             }
         }
-        public int NotifyWithImages(List<string> urls, string messageBody)
+        public int NotifyWithImages(List<string> urls, string messageBody, bool isRent)
         {
             if (urls == null || urls.Count == 0)
             {
@@ -67,7 +73,12 @@ namespace TelegramNotifier
                 }
                 album.First().Caption = messageBody;
                 album.First().ParseMode = ParseMode.Html;
-                Message[]? msg = BotClient.SendMediaGroupAsync(ChatId, album).Result;
+                long chatId = RentChatId;
+                if (!isRent)
+                {
+                    chatId = SaleChatId;
+                }
+                Message[]? msg = BotClient.SendMediaGroupAsync(chatId, album).Result;
                 if (msg == null)
                 {
                     Logger.Error("Telegram responded with 0 messages");
@@ -98,11 +109,7 @@ namespace TelegramNotifier
         public void RemoveMessage(long chatId, int messageId)
         {
             _ = BotClient.DeleteMessageAsync(chatId, messageId);
-        }
-        public void RemoveMessage(int messageId)
-        {
-            _ = BotClient.DeleteMessageAsync(ChatId, messageId);
-        }
+        }        
 
         public void WaitForCommand()
         {

@@ -16,12 +16,12 @@ namespace ApartmentCrawler
         public void Start()
         {
             RegisterNotifierCommands();
-            bool firstIteration = false;
+            bool firstIteration = true;
             Client client = new();
             // main loop
             while (true)
             {
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < 100; i++)
                 {
                     using AptCrawlerContext db = new();
                     Logger.Trace($"Fetching page#{i}...");
@@ -100,7 +100,7 @@ namespace ApartmentCrawler
                 priceUsd = (int)(priceGel / USDGEL);
             }
             double areaSize = Convert.ToDouble(product.AreaSize, System.Globalization.CultureInfo.InvariantCulture);
-            double pricePer50m = 999999;
+            double pricePer50m = 9999999;
             if (areaSize > 0)
             {
                 pricePer50m = (priceUsd / areaSize) * 50;
@@ -109,7 +109,10 @@ namespace ApartmentCrawler
             {
                 Logger.Debug($"Area size of apartment was 0 m2!");
             }
-            string general = $"{Convert.ToDouble(product.Rooms, System.Globalization.CultureInfo.InvariantCulture):0} комнаты за {priceUsd:0}$.\n";
+            double rooms = Convert.ToDouble(product.Rooms, System.Globalization.CultureInfo.InvariantCulture);
+            string general = $"{rooms:0} комнаты за {priceUsd:0}$.\n";
+            if (rooms >= 5)
+                general = $"{rooms:0} комнаты за {priceUsd:0}$.\n";
             string sizeInfo = $"Площадь {product.AreaSize:0} m2. Цена за 50 метров — {pricePer50m:0}$\n";
             string productLink = $"<a href=\"https://www.myhome.ge/en/pr/{product.ProductId}\">Объявление#{product.ProductId}</a> \n";
             string userLink = $"<a href=\"https://www.myhome.ge/en/search/?UserID={product.UserId}\">Пользователь#{product.UserId}</a> \n";
@@ -124,7 +127,12 @@ namespace ApartmentCrawler
                     break;
                 urls.Add($"https://static.my.ge/myhome/photos/{product.Photo}/large/{product.ProductId}_{i}.jpg");
             }
-            int result = TgNotifyer.NotifyWithImages(urls, caption);
+
+            if (product.AdtypeId == "1")
+                TgNotifyer.NotifyWithImages(urls, caption, false);
+            else if (product.AdtypeId == "3")
+                TgNotifyer.NotifyWithImages(urls, caption, true);
+
         }
 
         public void Dev()
