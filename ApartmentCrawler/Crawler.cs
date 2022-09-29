@@ -21,7 +21,7 @@ namespace ApartmentCrawler
             // main loop
             while (true)
             {
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 12; i++)
                 {
                     using AptCrawlerContext db = new();
                     Logger.Trace($"Fetching page#{i}...");
@@ -40,11 +40,7 @@ namespace ApartmentCrawler
                         {
                             Logger.Trace($"New user#{user.Value.UserId} found! Adding to database...");
                             db.Users.Add(user.Value);
-                        }
-                        else
-                        {
-                            Logger.Info("Same user again...");
-                        }
+                        }                       
                     }
                     foreach (Entities.Product product in productsResp.Data.Products)
                     {
@@ -71,11 +67,7 @@ namespace ApartmentCrawler
                                     $" square = {product.AreaSizeValue}; id={product.ProductId}; vip={product.Vip}");
                                 Logger.Trace("Can be posted to channel, but it's first iteration since we launch the program");
                             }
-                        }
-                        else
-                        {
-                            Logger.Info("Same product again...");
-                        }
+                        }                        
                     }
                     db.SaveChanges();
                     // add to db
@@ -85,7 +77,7 @@ namespace ApartmentCrawler
                 }
                 firstIteration = false;
                 Logger.Info("Crawling ended, let's sleep for a short time");
-                Thread.Sleep(TimeSpan.FromMinutes(7));
+                Thread.Sleep(TimeSpan.FromMinutes(5));
             }
         }
         private void PostProductToChannel(Entities.Product product)
@@ -100,10 +92,10 @@ namespace ApartmentCrawler
                 priceUsd = (int)(priceGel / USDGEL);
             }
             double areaSize = Convert.ToDouble(product.AreaSize, System.Globalization.CultureInfo.InvariantCulture);
-            double pricePer50m = 9999999;
+            double pricePerM = 9999999;
             if (areaSize > 0)
             {
-                pricePer50m = (priceUsd / areaSize) * 50;
+                pricePerM = priceUsd / areaSize;
             }
             else
             {
@@ -113,7 +105,7 @@ namespace ApartmentCrawler
             string general = $"{rooms:0} комнаты за {priceUsd:0}$.\n";
             if (rooms >= 5)
                 general = $"{rooms:0} комнаты за {priceUsd:0}$.\n";
-            string sizeInfo = $"Площадь {product.AreaSize:0} m2. Цена за 50 метров — {pricePer50m:0}$\n";
+            string sizeInfo = $"Площадь {product.AreaSize:0} m2. Цена за метр — {pricePerM:0.0}$\n";
             string productLink = $"<a href=\"https://www.myhome.ge/en/pr/{product.ProductId}\">Объявление#{product.ProductId}</a> \n";
             string userLink = $"<a href=\"https://www.myhome.ge/en/search/?UserID={product.UserId}\">Пользователь#{product.UserId}</a> \n";
             string elseInfo = $"| ParentId = {product.ParentId}. MaklerId = {product.MaklerId}. MaklerName = {product.MaklerName} | " +
@@ -127,11 +119,18 @@ namespace ApartmentCrawler
                     break;
                 urls.Add($"https://static.my.ge/myhome/photos/{product.Photo}/large/{product.ProductId}_{i}.jpg");
             }
-
-            if (product.AdtypeId == "1")
-                TgNotifyer.NotifyWithImages(urls, caption, false);
-            else if (product.AdtypeId == "3")
-                TgNotifyer.NotifyWithImages(urls, caption, true);
+            switch (product.AdtypeId)
+            {
+                case "1":                   
+                    TgNotifyer.NotifyWithImages(urls, caption, false);
+                    break;
+                case "3":                   
+                    TgNotifyer.NotifyWithImages(urls, caption, true);
+                    break;
+                default:
+                    // ignore
+                    break;
+            }
 
         }
 
