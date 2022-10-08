@@ -16,7 +16,7 @@ namespace ApartmentCrawler
         public void Start()
         {
             RegisterNotifierCommands();
-            bool firstIteration = true;
+            bool firstIteration = false;
             Client client = new();
             // main loop
             while (true)

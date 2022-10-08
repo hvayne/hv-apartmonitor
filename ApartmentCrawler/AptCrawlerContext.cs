@@ -9,7 +9,7 @@ namespace ApartmentCrawler.DbProvider
         public DbSet<Product> Products { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseSqlite("Filename=apartmentcrawler.db");
+            => optionsBuilder.UseSqlite("Filename=/root/apartmentcrawler.db");
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {            
             modelBuilder.Entity<User>(e =>
