@@ -15,7 +15,7 @@ namespace ApartmentCrawler
         {
             try
             {
-                Task<System.Net.Http.HttpResponseMessage> resp = browser.UrlGetToHttp($"https://www.myhome.ge/en/s/?GID=8742159&PrTypeID=1&Page={page}&Ajax=1");
+                Task<System.Net.Http.HttpResponseMessage> resp = browser.UrlGetToHttp($"https://www.myhome.ge/en/s/?GID=1996871&Page={page}&Ajax=1");
                 string respstr = resp.Result.Content.ReadAsStringAsync().Result;
                 DTO.MyHomeResponse deserialized = JsonConvert.DeserializeObject<DTO.MyHomeResponse>(respstr);
                 return deserialized;

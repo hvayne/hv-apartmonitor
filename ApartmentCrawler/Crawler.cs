@@ -21,7 +21,7 @@ namespace ApartmentCrawler
             // main loop
             while (true)
             {
-                for (int i = 0; i < 12; i++)
+                for (int i = 0; i < 70; i++)
                 {
                     using AptCrawlerContext db = new();
                     Logger.Trace($"Fetching page#{i}...");
@@ -40,7 +40,7 @@ namespace ApartmentCrawler
                         {
                             Logger.Trace($"New user#{user.Value.UserId} found! Adding to database...");
                             db.Users.Add(user.Value);
-                        }                       
+                        }
                     }
                     foreach (Entities.Product product in productsResp.Data.Products)
                     {
@@ -51,7 +51,7 @@ namespace ApartmentCrawler
                             db.Products.Add(product);
                             if (!firstIteration)
                             {
-                                // filtration
+                                // filtration by ownerType
                                 if (product.OwnerTypeId != "1")
                                     continue;
                                 // POST IT!
@@ -67,7 +67,7 @@ namespace ApartmentCrawler
                                     $" square = {product.AreaSizeValue}; id={product.ProductId}; vip={product.Vip}");
                                 Logger.Trace("Can be posted to channel, but it's first iteration since we launch the program");
                             }
-                        }                        
+                        }
                     }
                     db.SaveChanges();
                     // add to db
@@ -88,7 +88,7 @@ namespace ApartmentCrawler
             if (product.CurrencyId != "1")
             {
                 double priceGel = Convert.ToDouble(product.Price, System.Globalization.CultureInfo.InvariantCulture);
-                double USDGEL = 2.85;
+                double USDGEL = 2.76;
                 priceUsd = (int)(priceGel / USDGEL);
             }
             double areaSize = Convert.ToDouble(product.AreaSize, System.Globalization.CultureInfo.InvariantCulture);
@@ -104,13 +104,13 @@ namespace ApartmentCrawler
             double rooms = Convert.ToDouble(product.Rooms, System.Globalization.CultureInfo.InvariantCulture);
             string general = $"{rooms:0} комнаты за {priceUsd:0}$.\n";
             if (rooms >= 5)
-                general = $"{rooms:0} комнаты за {priceUsd:0}$.\n";
-            string sizeInfo = $"Площадь {product.AreaSize:0} m2. Цена за метр — {pricePerM:0.0}$\n";
+                general = $"{rooms:0} комнат за {priceUsd:0}$.\n";
+            string sizeInfo = $"Площадь {product.AreaSize:0} m2\n";
             string productLink = $"<a href=\"https://www.myhome.ge/en/pr/{product.ProductId}\">Объявление#{product.ProductId}</a> \n";
             string userLink = $"<a href=\"https://www.myhome.ge/en/search/?UserID={product.UserId}\">Пользователь#{product.UserId}</a> \n";
             string elseInfo = $"| ParentId = {product.ParentId}. MaklerId = {product.MaklerId}. MaklerName = {product.MaklerName} | " +
                 $"Адрес: <code>{product.StreetAddress.Unidecode().Replace("’", "")}</code> \n";
-            string caption = $"{general}{sizeInfo}{productLink}{userLink}{elseInfo}";
+            string caption = $"{pricePerM:0.0}$\\m2\n{general}{sizeInfo}{productLink}{userLink}{elseInfo}";
 
             List<string> urls = new();
             for (int i = 1; i < Convert.ToInt32(product.PhotosCount); i++)
@@ -121,10 +121,10 @@ namespace ApartmentCrawler
             }
             switch (product.AdtypeId)
             {
-                case "1":                   
+                case "1":
                     TgNotifyer.NotifyWithImages(urls, caption, false);
                     break;
-                case "3":                   
+                case "3":
                     TgNotifyer.NotifyWithImages(urls, caption, true);
                     break;
                 default:

@@ -10,8 +10,13 @@ namespace TelegramNotifier
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
         private static TelegramBotClient BotClient = new("256930387:AAEopn2bJqrmLL9EWHxn8Jtuiw0vvIvy1Cg"); // nanobyte_bot
-        private static long RentChatId = -1001452888696; // Apartments Crawler [RENT]
-        private static long SaleChatId = -1001641272354; // Apartments Crawler [SALE]
+        // Apartments Crawler Tbilisi [RENT] 1001861252508
+        // Apartments Crawler Batumi [RENT] 1001452888696
+        private static long RentChatId = -1001861252508;
+
+        // Apartments Crawler Batumi [SALE] 1001641272354
+        // Apartments Crawler Tbilisi [SALE] 1001507142005
+        private static long SaleChatId = -1001507142005;
 
         private static int UniqueId = 0;
 
